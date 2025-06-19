@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from settings import MONGO_CONNECTION_URI, DATABASE_NAME, COLLECTION_NAME
+from exceptions import UserNotFoundException
 
 
 class MongoDBService:
@@ -27,6 +28,14 @@ class MongoDBService:
 
     def update_many(self, filter_query, update_query):
         return self.collection.update_many(filter_query, update_query)
+
+    def get_recommended_users(self, user_id):
+        search_query = {"payload.id": user_id}
+        result = self.collection.find_one(search_query)
+        if not result:
+            raise UserNotFoundException(f"User with id {user_id} not found or has no recommendations.")
+        return result.get('recommendations', [])
+
 
     def get_n_closest_users(self, user_vector, user_id, max_score, n=10):
         pipeline = [

@@ -1,4 +1,7 @@
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, Flask, jsonify
+from services.mongodb import mongo_service
+from app.auth import auth
+from exceptions import UserNotFoundException
 
 main = Blueprint('main', __name__)
 
@@ -6,24 +9,16 @@ USERNAME = 'admin'
 PASSWORD = 'secret'
 
 
-@main.route('/', methods=['GET'])
-def index():
-    return "<h1>Hello, Flask!</h1>"
-
-
-@main.route('/process', methods=['POST'])
-def process_string():
-    # Basic Auth
-    auth = request.authorization
-    if not auth or auth.username != USERNAME or auth.password != PASSWORD:
-        return ('Unauthorized', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
-    # Handle JSON
-    data = request.get_json()
-    if not data or 'text' not in data:
-        abort(400, description="Missing 'text' in request JSON")
-
-    text = data['text']
-    print(f"Received text: {text}")
-
-    return '', 204
+@main.route('/recommended_users', methods=['GET'])
+@auth.login_required
+def recommended_users():
+    """
+    Endpoint to get recommended users.
+    Requires basic authentication.
+    """
+    user_id = request.args.get('user_id')
+    try:
+        recommendations = mongo_service.get_recommended_users(user_id)
+    except UserNotFoundException:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(recommendations)

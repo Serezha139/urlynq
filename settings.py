@@ -13,3 +13,10 @@ MONGO_CONNECTION_URI = f"mongodb+srv://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_
 # LYNQ API settings
 LYNQ_SECRET = os.getenv("LYNQ_API_SECRET", "")
 LYNQ_API_URL = os.getenv("LYNQ_API_URL", "https://lynq-server-06d2fa72825a.herokuapp.com/api/v1/users/matching")
+
+# API authentication token
+API_AUTH_TOKEN = os.getenv("API_AUTH_TOKEN", "test")
+
+TOKEN_LIST = {
+    API_AUTH_TOKEN: "default_user",
+}
