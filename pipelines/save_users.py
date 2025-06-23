@@ -8,6 +8,7 @@ def save_users_to_mongo():
     print("Fetched data from Lynq service:", json_data)
     vectorized_data = transform_to_vector(json_data)
     print("Transformed data to vectors:", vectorized_data)
+    mongo_service.delete_all_documents()  # Clear existing documents
     mongo_service.insert_many(vectorized_data)
     print("Users saved to MongoDB successfully.")
 

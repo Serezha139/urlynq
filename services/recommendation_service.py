@@ -1,47 +1,52 @@
-from const import FRIENDS, REFERRAL_ID, FIELD_WEIGHTS, HOMETOWN, PROFESSION, INTERESTS, AIMS
+from const import FRIENDS, REFERRAL_ID, HOMETOWN, PROFESSION, INTERESTS, AIMS, CONTACTS, REFERRAL_ID
+from collections import defaultdict
+from app.serializers import RecommendationRequest
 
 
 vector_fields = ["hometown", "profession", "aims", "interests"]
 
 
+def exponential_increase(exponential_base, n):
+    if n == 0:
+        return 0
+    return (2 - 1/n) * exponential_base
+
+
+def filter_and_sort_recommendations(recommendations):
+    filtered_recommendations = {user_id: score for user_id, score in recommendations.items() if score > 0}
+    sorted_recommendations = sorted(filtered_recommendations.items(), key=lambda x: x[1], reverse=True)
+    return sorted_recommendations
+
+
 class RecommendationService:
 
-    def calculate_recommendations(self, users: dict, closest_users: dict):
-        recommendations = {}
-        final_recommendations = {}
+    def calculate_recommendations(self, related_users, closest_users, recommendation_request: RecommendationRequest):
+        final_recommendations = defaultdict(int)
+        excluded = recommendation_request.exclude + recommendation_request.contacts + [recommendation_request.userId]
+        contacts = set(recommendation_request.contacts)
+        events = set(recommendation_request.events)
+        for user in related_users:
+            if user['id'] in excluded:
+                continue
+            score = 0
+            contact_intersection = len(contacts.intersection(set(user.get(CONTACTS, []))))
+            events_intersection = len(events.intersection(set(user.get(INTERESTS, []))))
+            score += exponential_increase(recommendation_request.baseMutualContactsValue, contact_intersection)
+            score += exponential_increase(recommendation_request.baseMutualEventsValue, events_intersection)
+            score += user.get(REFERRAL_ID) == recommendation_request.referralUserID and recommendation_request.referralUserIdValue or 0
+            final_recommendations[user['id']] = score
+        for user in closest_users:
+            final_recommendations[user['id']] += user['score']
+            if final_recommendations[user['id']] < recommendation_request.cutoffValue:
+                del final_recommendations[user['id']]
 
-        for user in [u["payload"] for u in users]:
-            user_id = user['id']
-            user_friends = set(user[FRIENDS])
-            recommended_friends = []
+        return filter_and_sort_recommendations(final_recommendations)
 
-            for other_user in [u["payload"] for u in users]:
-                if user_id == other_user['id'] or other_user["id"] in user_friends:
-                    continue  # Skip the current user
+    def get_single_user_recommendations(self, request: RecommendationRequest):
+        pass
 
-                score = 0
-
-                # Check referral
-                if user_id == other_user.get(REFERRAL_ID):
-                    score += 6
-
-                # Check common friends
-                common_friends = user_friends.intersection(set(other_user[FRIENDS]))
-                score += 4 * len(common_friends)
-
-                if score > 0:
-                    recommended_friends.append({'id': other_user['id'], 'score': score})
-
-            # Sort recommendations by score in descending order
-            recommendations[user_id] = recommended_friends
-            final_recommendation = self.merge_recommendations(recommended_friends, closest_users[user_id])
-            final_recommendation.sort(key=lambda x: x['score'], reverse=True)
-
-            final_recommendations[user_id] = final_recommendation[:10]  # Limit to top 10 recommendations
-        return final_recommendations
-
-    def get_recommended_users(self, user_data: dict, closest_users: dict, n: int = 10):
-        reccomendations = self.calculate_recommendations(user_data, closest_users)
+    def get_recommended_users(self, related_users, closest_users: dict, recommendation_request: RecommendationRequest):
+        reccomendations = self.calculate_recommendations(related_users, closest_users, recommendation_request)
         return reccomendations
 
     def merge_recommendations(self, recommendations, closest_users):
@@ -61,9 +66,6 @@ class RecommendationService:
                 merged[user['id']]['score'] += user['score']
 
         return list(merged.values())
-
-    def get_max_score(self, user: dict):
-        return FIELD_WEIGHTS[HOMETOWN] + FIELD_WEIGHTS[PROFESSION] + len(user['payload'][INTERESTS]) + len(user['payload'][AIMS])
 
 recommendation_service = RecommendationService()
 

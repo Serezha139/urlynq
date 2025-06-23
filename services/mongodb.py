@@ -1,13 +1,14 @@
 from pymongo import MongoClient
-from settings import MONGO_CONNECTION_URI, DATABASE_NAME, COLLECTION_NAME
+import settings
 from exceptions import UserNotFoundException
+from services.mongo_vectorization import vectorize
 
 
 class MongoDBService:
     def __init__(self):
-        mongo_client = MongoClient(MONGO_CONNECTION_URI, tlsAllowInvalidCertificates=True)
-        database = mongo_client[DATABASE_NAME]
-        self.collection = database[COLLECTION_NAME]
+        mongo_client = MongoClient(settings.MONGO_CONNECTION_URI, tlsAllowInvalidCertificates=True)
+        database = mongo_client[settings.DATABASE_NAME]
+        self.collection = database[settings.COLLECTION_NAME]
 
     def insert_many(self, data):
         if isinstance(data, list):
@@ -26,6 +27,9 @@ class MongoDBService:
     def delete_many(self, query):
         return self.collection.delete_many(query)
 
+    def delete_all_documents(self):
+        return self.collection.delete_many({})
+
     def update_many(self, filter_query, update_query):
         return self.collection.update_many(filter_query, update_query)
 
@@ -36,8 +40,18 @@ class MongoDBService:
             raise UserNotFoundException(f"User with id {user_id} not found or has no recommendations.")
         return result.get('recommendations', [])
 
+    def get_related_users(self, contacts, circles, events):
+        result = self.collection.find({
+            "$or": [
+                {"payload.contacts": {"$in": contacts}},
+                {"payload.circles": {"$in": circles}},
+                {"payload.events": {"$in": events}}
+            ]
+        })
+        return [item['payload'] for item in result]
 
-    def get_n_closest_users(self, user_vector, user_id, max_score, n=10):
+    def get_closest_users(self, prompt):
+        user_vector = vectorize(prompt)
         pipeline = [
             {
                 '$vectorSearch': {
@@ -45,7 +59,7 @@ class MongoDBService:
                     'path': 'vector',
                     'queryVector': user_vector,
                     'numCandidates': 150,
-                    'limit': n + 1
+                    'limit': 150,
                 }
             }, {
                 '$project': {
@@ -58,7 +72,12 @@ class MongoDBService:
             }
         ]
         result = self.collection.aggregate(pipeline)
-        return [{"id": item["payload"]["id"], "score": item["score"] * max_score} for item in result if item.get('payload')['id'] != user_id]
+        return [{"id": item["payload"]["id"], "score": item["score"]} for item in result]
 
 
-mongo_service = MongoDBService()
+if settings.ENVIRONMENT == settings.TEST:
+    from unittest.mock import MagicMock
+    mongo_service = MagicMock()
+else:
+    mongo_service = MongoDBService()
+
