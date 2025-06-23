@@ -1,6 +1,8 @@
 from services.mongodb import mongo_service
 from services.recommendation_service import recommendation_service
 
+
+# NOT USED ATM
 def save_recommendations():
     users = mongo_service.fetch_all()
     all_closest_users = {}

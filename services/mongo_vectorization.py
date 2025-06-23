@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from const import VECTOR_FIELDS
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+model = SentenceTransformer("roberta-large-nli-stsb-mean-tokens")
 
 def transform_to_vector(json_data):
     vectorized_data = []

@@ -26,7 +26,8 @@ def recommended_users():
         related_users = mongo_service.get_related_users(
             contacts=request_data.contacts,
             events=request_data.events,
-            circles=request_data.circles
+            circles=request_data.circles,
+            referral_user_id=request_data.referralUserID,
         )
         closest_users = mongo_service.get_closest_users(request_data.prompt)
         recommendations = recommendation_service.get_recommended_users(related_users, closest_users, request_data)

@@ -40,12 +40,13 @@ class MongoDBService:
             raise UserNotFoundException(f"User with id {user_id} not found or has no recommendations.")
         return result.get('recommendations', [])
 
-    def get_related_users(self, contacts, circles, events):
+    def get_related_users(self, contacts, circles, events, referral_user_id):
         result = self.collection.find({
             "$or": [
                 {"payload.contacts": {"$in": contacts}},
-                {"payload.circles": {"$in": circles}},
-                {"payload.events": {"$in": events}}
+                #{"payload.circles": {"$in": circles}},
+                {"payload.events": {"$in": events}},
+                {"payload.referralUserId": referral_user_id}
             ]
         })
         return [item['payload'] for item in result]
