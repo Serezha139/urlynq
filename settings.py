@@ -20,10 +20,10 @@ if ENVIRONMENT == PROD:
 # LYNQ API settings
 LYNQ_SECRET = os.getenv("LYNQ_API_SECRET", "")
 LYNQ_API_URL = os.getenv("LYNQ_API_URL", "https://lynq-server-06d2fa72825a.herokuapp.com/api/v1/users/matching")
-LYNQ_API_USER_LIMIT = 100
+LYNQ_API_USER_LIMIT = 1000
 
 # API authentication token
-API_AUTH_TOKEN = os.getenv("API_AUTH_TOKEN", "test")
+API_AUTH_TOKEN = os.getenv("LYNQ_API_SECRET", "test")
 
 TOKEN_LIST = {
     API_AUTH_TOKEN: "default_user",

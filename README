@@ -1,9 +1,22 @@
-from unittest import TestCase
+Envirionment Variables needed for correct work:
 
-from app import create_app
+For Mongo DB:
+MONGO_DATABASE_NAME
+MONGO_COLLECTION_NAME
+MONGO_USERNAME
+MONGO_PASSWORD
+MONGO_CLUSTER
+MONGO_APP_NAME
 
+LYNQ_API_SECRET - both secret for application API and for lynq API
+LYNQ_API_URL
 
-mock_data = {
+API usage:
+
+POST /recommended_users
+JSON Request BODY EXAMPLE:
+
+{
  "cutoffValue": 0.5,
  "referralUserIdValue": 0.35,
  "baseMutualContactsValue": 0.1,
@@ -28,17 +41,3 @@ mock_data = {
    "684b446166924406820338e3"
  ]
 }
-
-
-class TestRoutes(TestCase):
-
-    def setUp(self):
-        self.app = create_app()
-        self.client = self.app.test_client()
-
-    def test_recommended_users_response(self):
-        with self.app.app_context():
-            response = self.client.post('/recommended_users', json=mock_data, headers={'Authorization': 'Bearer test'})
-            self.assertEqual(response.status_code, 200)
-            json = response.json
-            assert json
