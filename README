@@ -3,10 +3,7 @@ Envirionment Variables needed for correct work:
 For Mongo DB:
 MONGO_DATABASE_NAME
 MONGO_COLLECTION_NAME
-MONGO_USERNAME
-MONGO_PASSWORD
-MONGO_CLUSTER
-MONGO_APP_NAME
+MONGO_CONNECTION_URI
 
 LYNQ_API_SECRET - both secret for application API and for lynq API
 LYNQ_API_URL

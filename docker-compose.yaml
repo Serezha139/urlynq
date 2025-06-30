@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - MONGO_DATABASE_NAME=MY_DATABASE_NAME
+      - MONGO_COLLECTION_NAME=USER_RECOMMENDATIONS
+      - MONGO_CONNECTION_URI=${MONGO_CONNECTION_URI}
+      - LYNQ_API_SECRET=${LYNQ_API_SECRET}
+      - LYNQ_API_URL=${LYNQ_API_URL}
+    ports:
+      - "80:8000"
+    volumes:
+      - .:/app

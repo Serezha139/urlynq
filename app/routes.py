@@ -6,6 +6,9 @@ from app.auth import auth
 from app.serializers import RecommendationRequest
 from exceptions import UserNotFoundException
 
+import logging
+logger = logging.getLogger()
+
 
 main = Blueprint('main', __name__)
 
@@ -20,8 +23,10 @@ def recommended_users():
     Endpoint to get recommended users.
     Requires basic authentication.
     """
-    data = request.get_json()
     try:
+        data = request.get_json()
+
+        logger.info('Received request for recommended users.')
         request_data = RecommendationRequest(**data)
         related_users = mongo_service.get_related_users(
             contacts=request_data.contacts,
@@ -35,5 +40,10 @@ def recommended_users():
         return jsonify({"error": "User not found"}), 404
     except ValidationError as e:
         return jsonify(e.errors()), 400
+    except Exception as e:
+        import traceback
+        tb_str = ''.join(traceback.format_exception(type(e), e, e.__traceback__))
+        payload = {'errror': tb_str}
+        return jsonify(payload), 500
 
     return jsonify(recommendations)
