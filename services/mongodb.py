@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 import settings
 from exceptions import UserNotFoundException
-from services.mongo_vectorization import vectorize
+from services.mongo_vectorization import vectorization_service
 
 
 class MongoDBService:
@@ -52,7 +52,7 @@ class MongoDBService:
         return [item['payload'] for item in result]
 
     def get_closest_users(self, prompt):
-        user_vector = vectorize(prompt)
+        user_vector = vectorization_service.vectorize(prompt)
         pipeline = [
             {
                 '$vectorSearch': {
